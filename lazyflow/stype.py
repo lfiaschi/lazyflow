@@ -145,7 +145,7 @@ class ArrayLike( SlotType ):
             assert len(roi.start) == result.ndim, "check_result_valid: result has wrong number of dimensions (%d instead of %d)" % (result.ndim, len(roi.start))
             for d in range(result.ndim):
                 s = roi.stop[d] - roi.start[d]
-                assert result.shape[d] == s, "check_result_valid: result has wrong shape (%d instead of %d) for dimension %d" % (result.shape[d], s, d)
+                assert result.shape[d] == s, "check_result_valid: result has wrong shape (%.1f instead of %.1f) for dimension %d" % (result.shape[d], s, d)
         elif isinstance(result, list):
             s = roi.stop[0] - roi.start[0]
             assert len(result) == s, "check_result_valid: result has wrong shape (%d instead of %d) for dimension %d" % (result.shape[d], s, d)
