@@ -194,7 +194,8 @@ class OpStackWriter(Operator):
                 patternEntries = iterationIndexDescriptors
                 
                 fullFilename = filepath + filepattern % (patternEntries)
-                vigra.impex.writeImage(data.reshape(*newImageShape).transpose(self.transposing), fullFilename)
+                dataview = data.view(numpy.ndarray) # Some bug (in numpy.ndarray.reshape?) seems to require this cast.
+                vigra.impex.writeImage(dataview.reshape(newImageShape).transpose(self.transposing), fullFilename)
                 
                 req.clean() # Discard the data in the request and allow its children to be garbage collected.
 
@@ -372,7 +373,6 @@ class OpH5WriterBigDataset(Operator):
                 g = self.f.create_group(hdf5GroupName)
 
         dataShape=self.Image.meta.shape
-        axistags = self.Image.meta.axistags
         taggedShape = self.Image.meta.getTaggedShape()
         dtype = self.Image.meta.dtype
         if type(dtype) is numpy.dtype:
@@ -412,19 +412,17 @@ class OpH5WriterBigDataset(Operator):
                                 shape=dataShape,
                                 dtype=dtype,
                                 chunks=self.chunkShape,
-                                compression='lzf'
-                                )
+                                compression='gzip', # <-- Would be nice to use lzf compression here, but that is h5py-specific.
+                                compression_opts=1) # <-- Optimize for speed, not disk space.
 
         if self.Image.meta.drange is not None:
             self.d.attrs['drange'] = self.Image.meta.drange
 
     def execute(self, slot, subindex, rroi, result):
-        key = roiToSlice(rroi.start, rroi.stop)
         self.progressSignal(0)
         
         slicings=self.computeRequestSlicings()
         numSlicings = len(slicings)
-        imSlot = self.inputs["Image"]
 
         self.logger.debug( "Dividing work into {} pieces".format( len(slicings) ) )
 

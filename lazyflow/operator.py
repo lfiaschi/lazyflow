@@ -315,6 +315,12 @@ class Operator(object):
         for child in self._children.keys():
             child._disconnect()
 
+    def disconnectFromDownStreamPartners(self):
+        for slot in self.inputs.values() + self.outputs.values():
+            partners = list(slot.partners)
+            for p in partners:
+                p.disconnect()
+
     def _initCleanup(self):
         self._cleaningUp = True
         for child in self._children.keys():
@@ -478,7 +484,15 @@ class Operator(object):
         The default implementation emulates the old api behaviour.
 
         """
-        pass
+        for slot in self.outputs.values():
+            # This assert is here to force subclasses to override this method if the situation requires it.
+            # If you have any output slots that aren't directly connected to an internal operator,
+            #  you probably need to override this method.
+            # If your subclass provides an implementation of this method, there 
+            #  is no need for it to call super().setupOutputs()
+            assert slot.partner is not None, \
+                "Output slot '{}' of operator '{}' has no upstream partner, " \
+                "so you must override setupOutputs()".format( slot.name, self.name )
 
     def execute(self, slot, subindex, roi, result):
         """ This method of the operator is called when a connected

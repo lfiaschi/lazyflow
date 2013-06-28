@@ -47,11 +47,29 @@ class MetaDict(defaultdict):
         """
         Copy all the elements from other into this
         """
+        assert isinstance(other, MetaDict), "assignFrom() arg must be another MetaDict."
         dirty = not (self == other)
         origdirty = self._dirty
         origready = self._ready
         if dirty:
             self.clear()
+            for k, v in other.items():
+                self[k] = copy.copy(v)
+        self._dirty = origdirty | dirty
+
+        # Readiness can't be assigned. It can only be assigned in
+        # _setupOutputs or setValue (or copied via _changed)
+        self._ready = origready
+
+    def updateFrom(self, other):
+        """
+        Like dict.update(), but with special treatment for _ready and _dirty fields.
+        """
+        assert isinstance(other, MetaDict), "updateFrom() arg must be another MetaDict."
+        dirty = not (self == other)
+        origdirty = self._dirty
+        origready = self._ready
+        if dirty:
             for k, v in other.items():
                 self[k] = copy.copy(v)
         self._dirty = origdirty | dirty

@@ -57,6 +57,9 @@ class Namespace(object):
     def __ne__(self, other):
         return not self.__eq__(other)
 
+    def __str__(self):
+        return "jsonConfig.Namespace: " + str( self._items.items() )
+
 class AutoEval(object):
     """
     Callable that serves as a pseudo-type.
@@ -141,7 +144,7 @@ class JsonConfigParser( object ):
     ...   "_schema_name" : "example-schema",
     ...   "_schema_version" : 1.0,
     ... 
-    ...   "shoe_size" : int,
+    ...   "shoe size" : int,
     ...   "color" : str
     ... }
     >>> 
@@ -152,7 +155,7 @@ class JsonConfigParser( object ):
     ...   "_schema_name" : "example-schema",
     ...   "_schema_version" : 1.0,
     ... 
-    ...   "shoe_size" : 12,
+    ...   "shoe size" : 12,
     ...   "color" : "red",
     ...   "ignored_field" : "Fields that are unrecognized by the schema are ignored."
     ... }
@@ -165,10 +168,11 @@ class JsonConfigParser( object ):
     >>> 
     >>> # Parse the config file
     >>> parsedFields = parser.parseConfigFile('/tmp/example_config.json')
-    >>> print parsedFields.shoe_size
-    12
     >>> print parsedFields.color
     red
+    >>> # Whitespace in field names is replaced with underscores in the Namespace member.
+    >>> print parsedFields.shoe_size
+    12
     """
     class ParsingError(Exception):
         pass
@@ -256,10 +260,12 @@ class JsonConfigParser( object ):
                 except JsonConfigParser.ParsingError, e:
                     raise type(e)( "Error parsing config field '{f}':\n{msg}".format( f=key, msg=e.args[0] ) )
                 else:
+                    key = key.replace(' ', '_')
                     setattr( namespace, key, finalValue )
 
         # All other config fields are None by default
         for key in self._fields.keys():
+            key = key.replace(' ', '_')
             if key not in namespace.__dict__.keys():
                 setattr(namespace, key, None)
 
